@@ -7,6 +7,8 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>4790278e-5c51-4fec-a397-f7eaa13e76f5</UserSecretsId>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <VersionPrefix>0.1.0.0</VersionPrefix>
+    <VersionSuffix>preview.1</VersionSuffix>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
