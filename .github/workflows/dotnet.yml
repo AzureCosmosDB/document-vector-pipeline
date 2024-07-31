@@ -31,5 +31,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: document-vector-pipeline.zip
+        name: document-vector-pipeline
         path: DocumentVectorPipelineFunctions/bin/Release/net8.0/publish/
