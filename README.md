@@ -32,7 +32,7 @@ Currently this proof of concept uses:
 * An Azure subscription with access to Azure OpenAI.
 * The Azure CLI installed.
 * A Powershell prompt.
-* Download the Azure Functions zip file* from [TODO: Post release here]() (or build your own from this repo with `dotnet publish -c Release`, and then zip the resulting publish directory)
+* Download the Azure Functions zip file* from the [latest release](https://github.com/AzureCosmosDB/document-vector-pipeline/releases) (or build your own from this repo with `dotnet publish -c Release`, and then zip the resulting publish directory)
 
 ### Steps
 1. Create a Resource Group in your Azure subscritpion in the region where you want your resources deployed. Ensure it's a region that supports all of the above Azure Resource types. Examples include `West US`, `East US`, and `East US2`.
