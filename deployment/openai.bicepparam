@@ -6,14 +6,14 @@ param name = 'docingopenaiacc'
 
 param deployments = [
   {
-    name: 'ada'
+    name: 'text-embedding-3-large'
     sku: {
       name: 'Standard'
       capacity: 200
     }
     model: {
-      name: 'text-embedding-ada-002'
-      version: '2'
+      name: 'text-embedding-3-large'
+      version: '1'
     }
   }
 ]

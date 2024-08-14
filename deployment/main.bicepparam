@@ -23,7 +23,7 @@ param storage_containers = [
     name: 'documents'
   }
 ]
-param storage_connectionStringSecretName = 'StorageAccountConnectionString'
+param storage_connectionStringSecretName = 'AzureBlobStorageAccConnectionString'
 
 
 // Function app params
@@ -89,14 +89,14 @@ param documentIntelligenceSecretKey = 'AzureDocumentIntelligenceApiKey'
 // Open AI params
 param open_ai_deployments = [
   {
-    name: 'ada'
+    name: 'text-embedding-3-large'
     sku: {
       name: 'Standard'
       capacity: 50
     }
     model: {
-      name: 'text-embedding-ada-002'
-      version: '2'
+      name: 'text-embedding-3-large'
+      version: '1'
     }
   }
 ]

@@ -44,7 +44,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
 
 param storage_account_id_roles array = ['b24988ac-6180-42a0-ab88-20f7382dd24c','ba92f5b4-2d11-453d-a403-e96b0029c9fe'] // Contributor, Storage blob data contributor
 resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in storage_account_id_roles : {
-  name: guid(resourceGroup().id, 'storage-app', id_role)
+  name: guid(resourceGroup().id, '${storage.name}-storagerole', id_role)
   scope: blobService
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
