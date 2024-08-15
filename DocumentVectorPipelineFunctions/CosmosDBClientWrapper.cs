@@ -17,17 +17,17 @@ internal class CosmosDBClientWrapper
 
     public static async ValueTask<CosmosDBClientWrapper> CreateInstance(CosmosClient client, ILogger logger)
     {
-        if (CosmosDBClientWrapper.instance != null)
+        if (instance != null)
         {
-            return CosmosDBClientWrapper.instance;
+            return instance;
         }
 
         var curInstance = new CosmosDBClientWrapper(client, logger);
         await curInstance.GetOrCreateDatabaseAndContainerAsync();
 
-        CosmosDBClientWrapper.instance = curInstance;
+        instance = curInstance;
 
-        return CosmosDBClientWrapper.instance;
+        return instance;
     }
 
     public async Task UpsertDocumentsAsync(string fileUri, List<TextChunk> chunks, EmbeddingCollection embeddings)

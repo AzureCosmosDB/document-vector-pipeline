@@ -3,12 +3,14 @@ using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Embeddings;
 
 namespace BlobStorageTriggeredFunction;
 
 public class BlobTriggerFunction(
+    IConfiguration configuration,
     DocumentAnalysisClient documentAnalysisClient,
     ILoggerFactory loggerFactory,
     CosmosClient cosmosClient,
@@ -16,12 +18,16 @@ public class BlobTriggerFunction(
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<BlobTriggerFunction>();
 
+    private const string AzureOpenAIModelDeploymentDimensionsName = "AzureOpenAIModelDimensions";
+    private static readonly int DefaultDimensions = 1536;
+
     private const int MaxBatchSize = 2048;
 
     [Function("BlobTriggerFunction")]
     public async Task Run([BlobTrigger("documents/{name}", Connection = "AzureBlobStorageAccConnectionString")] BlobClient blobClient)
     {
         this._logger.LogInformation("Starting processing of blob name: '{name}'", blobClient.Name);
+
         if (await blobClient.ExistsAsync())
         {
             await this.HandleBlobCreateEventAsync(blobClient);
@@ -73,7 +79,20 @@ public class BlobTriggerFunction(
     {
         this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);
 
-        var embeddings = await embeddingClient.GenerateEmbeddingsAsync(batchChunkTexts.Select(p => p.Text).ToList());
+        int embeddingDimensions = DefaultDimensions;
+        if (configuration != null &&
+            !string.IsNullOrWhiteSpace(configuration[AzureOpenAIModelDeploymentDimensionsName]) &&
+            int.TryParse(configuration[AzureOpenAIModelDeploymentDimensionsName], out int inputDimensions))
+        {
+            embeddingDimensions = inputDimensions;
+            this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", embeddingDimensions);
+        }
+
+        EmbeddingGenerationOptions embeddingGenerationOptions = new EmbeddingGenerationOptions()
+        {
+            Dimensions = embeddingDimensions
+        };
+        var embeddings = await embeddingClient.GenerateEmbeddingsAsync(batchChunkTexts.Select(p => p.Text).ToList(), embeddingGenerationOptions);
         await cosmosDBClientWrapper.UpsertDocumentsAsync(blobClient.Uri.AbsoluteUri, batchChunkTexts, embeddings);
 
         batchChunkTexts.Clear();

@@ -36,6 +36,9 @@ param open_ai_sku string
 param open_ai_kind string
 param open_ai_format string
 param open_ai_publicNetworkAccess string
+param open_ai_openAIModelDimensionsKey string
+param embeddingModelName string
+param embeddingModelDimensions string
 
 // Document intelligence params
 param document_intelligence_name string
@@ -171,7 +174,10 @@ module open_ai_deployment 'openai.bicep' = {
     publicNetworkAccess:open_ai_publicNetworkAccess
     open_ai_openAIEndpointKey: open_ai_openAIEndpointKey
     open_ai_openAIModelDeploymentKey: open_ai_openAIModelDeploymentKey
+    open_ai_openAIModelDimensionsKey: open_ai_openAIModelDimensionsKey
     open_ai_openAISecretKey: open_ai_openAISecretKey
+    embeddingModelName: embeddingModelName
+    embeddingModelDimensions: embeddingModelDimensions
     tags: tags
   }
   dependsOn: [

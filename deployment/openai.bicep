@@ -13,7 +13,9 @@ param open_ai_openAIEndpointKey string
 @secure()
 param open_ai_openAISecretKey string
 param open_ai_openAIModelDeploymentKey string
-
+param open_ai_openAIModelDimensionsKey string
+param embeddingModelName string
+param embeddingModelDimensions string
 
 // Get existing keyvault resource
 resource keyvault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
@@ -87,7 +89,15 @@ resource openAIModelDeployment 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = 
   parent: keyvault
   tags: tags
   properties: {
-    value: 'text-embedding-3-large'
+    value: embeddingModelName
+  }
+}
+resource openAIModelDimensions 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  name: open_ai_openAIModelDimensionsKey
+  parent: keyvault
+  tags: tags
+  properties: {
+    value: embeddingModelDimensions
   }
 }
 

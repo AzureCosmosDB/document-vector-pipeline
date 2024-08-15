@@ -87,15 +87,17 @@ param documentIntelligenceSecretKey = 'AzureDocumentIntelligenceApiKey'
 
 
 // Open AI params
+param embeddingModelName = 'text-embedding-3-large'
+param embeddingModelDimensions = '1536'
 param open_ai_deployments = [
   {
-    name: 'text-embedding-3-large'
+    name: embeddingModelName
     sku: {
       name: 'Standard'
       capacity: 50
     }
     model: {
-      name: 'text-embedding-3-large'
+      name: embeddingModelName
       version: '1'
     }
   }
@@ -107,3 +109,4 @@ param open_ai_publicNetworkAccess = 'Enabled'
 param open_ai_openAIEndpointKey = 'AzureOpenAIEndpoint'
 param open_ai_openAISecretKey = 'AzureOpenAIApiKey'
 param open_ai_openAIModelDeploymentKey = 'AzureOpenAIModelDeployment'
+param open_ai_openAIModelDimensionsKey = 'AzureOpenAIModelDimensions'
