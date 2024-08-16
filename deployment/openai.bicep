@@ -13,7 +13,9 @@ param open_ai_openAIEndpointKey string
 @secure()
 param open_ai_openAISecretKey string
 param open_ai_openAIModelDeploymentKey string
-
+param open_ai_openAIModelDimensionsKey string
+param embeddingModelName string
+param embeddingModelDimensions string
 
 // Get existing keyvault resource
 resource keyvault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
@@ -62,7 +64,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
 }
 param storage_account_id_roles array = ['b24988ac-6180-42a0-ab88-20f7382dd24c'] // contributor
 resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in storage_account_id_roles : {
-  name: guid(resourceGroup().id, 'openai-app', id_role)
+  name: guid(resourceGroup().id, '${name}-openairole', id_role)
   scope: openAi
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
@@ -87,7 +89,15 @@ resource openAIModelDeployment 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = 
   parent: keyvault
   tags: tags
   properties: {
-    value: 'ada'
+    value: embeddingModelName
+  }
+}
+resource openAIModelDimensions 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  name: open_ai_openAIModelDimensionsKey
+  parent: keyvault
+  tags: tags
+  properties: {
+    value: embeddingModelDimensions
   }
 }
 

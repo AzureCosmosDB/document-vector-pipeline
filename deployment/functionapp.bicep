@@ -54,7 +54,7 @@ resource azureWebJobsStorageConnectionString 'Microsoft.KeyVault/vaults/secrets@
 // Assign storage account contributor role to func_app_storage_account
 param storage_account_id_roles array = ['ba92f5b4-2d11-453d-a403-e96b0029c9fe'] // Storage blob data contributor
 resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in storage_account_id_roles : {
-  name: guid(resourceGroup().id, 'storage-function-app', id_role)
+  name: guid(resourceGroup().id, '${func_app_storage_account.name}-webjobsrole', id_role)
   scope: func_app_storage_account
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
@@ -177,7 +177,7 @@ resource funcApp 'Microsoft.Web/sites@2021-02-01' = {
 // Assign storage account contributor role to azure function app
 param id_roles_arr array = ['b24988ac-6180-42a0-ab88-20f7382dd24c','00482a5a-887f-4fb3-b363-3b7fe8e74483'] // Contributor, KeyVault admin
 resource roleAssignmentFUnctionApp 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in id_roles_arr : {
-  name: guid(resourceGroup().id, 'function-app', id_role)
+  name: guid(resourceGroup().id, '${func_app_storage_account.name}-funcrole', id_role)
   scope: funcApp
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)

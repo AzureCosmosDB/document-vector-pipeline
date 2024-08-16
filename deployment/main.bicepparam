@@ -23,7 +23,7 @@ param storage_containers = [
     name: 'documents'
   }
 ]
-param storage_connectionStringSecretName = 'StorageAccountConnectionString'
+param storage_connectionStringSecretName = 'AzureBlobStorageAccConnectionString'
 
 
 // Function app params
@@ -87,16 +87,18 @@ param documentIntelligenceSecretKey = 'AzureDocumentIntelligenceApiKey'
 
 
 // Open AI params
+param embeddingModelName = 'text-embedding-3-large'
+param embeddingModelDimensions = '1536'
 param open_ai_deployments = [
   {
-    name: 'ada'
+    name: embeddingModelName
     sku: {
       name: 'Standard'
       capacity: 50
     }
     model: {
-      name: 'text-embedding-ada-002'
-      version: '2'
+      name: embeddingModelName
+      version: '1'
     }
   }
 ]
@@ -107,3 +109,4 @@ param open_ai_publicNetworkAccess = 'Enabled'
 param open_ai_openAIEndpointKey = 'AzureOpenAIEndpoint'
 param open_ai_openAISecretKey = 'AzureOpenAIApiKey'
 param open_ai_openAIModelDeploymentKey = 'AzureOpenAIModelDeployment'
+param open_ai_openAIModelDimensionsKey = 'AzureOpenAIModelDimensions'

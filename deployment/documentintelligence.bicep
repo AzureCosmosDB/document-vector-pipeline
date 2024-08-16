@@ -54,7 +54,7 @@ var connectionKey = documentIntelligence.listKeys().key1
 // Assign storage account contributor role to func_app_storage_account
 param storage_account_id_roles array = ['ba92f5b4-2d11-453d-a403-e96b0029c9fe'] // Storage blob data contributor
 resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in storage_account_id_roles : {
-  name: guid(resourceGroup().id, 'docintl-app', id_role)
+  name: guid(resourceGroup().id, '${name}-docintlrole', id_role)
   scope: storage_account
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)

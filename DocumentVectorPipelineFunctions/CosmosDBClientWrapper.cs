@@ -17,13 +17,15 @@ internal class CosmosDBClientWrapper
 
     public static async ValueTask<CosmosDBClientWrapper> CreateInstance(CosmosClient client, ILogger logger)
     {
-        if (CosmosDBClientWrapper.instance != null)
+        if (instance != null)
         {
-            return CosmosDBClientWrapper.instance;
+            return instance;
         }
 
-        instance = new CosmosDBClientWrapper(client, logger);
-        await instance.GetOrCreateDatabaseAndContainerAsync();
+        var curInstance = new CosmosDBClientWrapper(client, logger);
+        await curInstance.GetOrCreateDatabaseAndContainerAsync();
+
+        instance = curInstance;
 
         return instance;
     }
@@ -59,7 +61,7 @@ internal class CosmosDBClientWrapper
             {
                 if (item is CosmosException cosmosException)
                 {
-                    LogHeaders(cosmosException.Headers);
+                    this.LogHeaders(cosmosException.Headers);
                 }
             }
 
@@ -110,17 +112,17 @@ internal class CosmosDBClientWrapper
         this.container = containerResponse.Container;
         if (containerResponse.StatusCode != System.Net.HttpStatusCode.OK)
         {
-            LogHeaders(containerResponse.Headers);
+            this.LogHeaders(containerResponse.Headers);
         }
     }
 
     private void LogHeaders(Headers headers)
     {
-        using var scope = logger.BeginScope("Created a container.");
+        using var scope = this.logger.BeginScope("Created a container.");
 
         foreach (var headerName in headers.AllKeys())
         {
-            logger.LogWarning("Header: {header}, Value: '{value}'", headerName, headers[headerName]);
+            this.logger.LogWarning("Header: {header}, Value: '{value}'", headerName, headers[headerName]);
         }
     }
 
