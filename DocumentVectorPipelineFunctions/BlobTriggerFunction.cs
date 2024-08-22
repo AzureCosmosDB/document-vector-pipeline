@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI.Embeddings;
 
-namespace BlobStorageTriggeredFunction;
+namespace DocumentVectorPipelineFunctions;
 
 public class BlobTriggerFunction(
     IConfiguration configuration,
@@ -20,6 +20,7 @@ public class BlobTriggerFunction(
 
     private const string AzureOpenAIModelDeploymentDimensionsName = "AzureOpenAIModelDimensions";
     private static readonly int DefaultDimensions = 1536;
+    private static readonly int BufferSize = 4 * 1024 * 1024; // 4MB
 
     private const int MaxBatchSize = 2048;
 
@@ -41,20 +42,23 @@ public class BlobTriggerFunction(
 
     private async Task HandleBlobCreateEventAsync(BlobClient blobClient)
     {
-        this._logger.LogInformation("Analyzing document using DocumentAnalyzerService from blobUri: '{blobUri}' using layout: {layout}", blobClient.Name, "prebuilt-read");
-        var operation = await documentAnalysisClient.AnalyzeDocumentFromUriAsync(
-            WaitUntil.Completed,
-            "prebuilt-read",
-            blobClient.Uri);
-
-        var result = operation.Value;
-
-        this._logger.LogInformation("Extracted content from '{name}', # pages {pageCount}", blobClient.Name, result.Pages.Count);
-
         var cosmosDBClientWrapper = await CosmosDBClientWrapper.CreateInstance(cosmosClient, this._logger);
 
+        this._logger.LogInformation("Analyzing document using DocumentAnalyzerService from blobUri: '{blobUri}' using layout: {layout}", blobClient.Name, "prebuilt-read");
+
+        MemoryStream memoryStream = new MemoryStream();
+        await blobClient.DownloadToAsync(memoryStream);
+
+        var operation = await documentAnalysisClient.AnalyzeDocumentAsync(
+            WaitUntil.Completed,
+            "prebuilt-read",
+            memoryStream);
+
+        var result = operation.Value;
+        this._logger.LogInformation("Extracted content from '{name}', # pages {pageCount}", blobClient.Name, result.Pages.Count);
+
         int totalChunksCount = 0;
-        var batchChunkTexts = new List<TextChunk>();
+        var batchChunkTexts = new List<TextChunk>(MaxBatchSize);
         foreach (var chunk in TextChunker.FixedSizeChunking(result))
         {
             batchChunkTexts.Add(chunk);
@@ -72,21 +76,15 @@ public class BlobTriggerFunction(
             await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkTexts);
         }
 
-        this._logger.LogInformation("Created total chunks: '{documentCount}' of document.", totalChunksCount);
+        this._logger.LogInformation("Finished processing blob {0}, total chunks processed {1}.", blobClient.Name, totalChunksCount);
     }
 
     private async Task ProcessCurrentBatchAsync(BlobClient blobClient, CosmosDBClientWrapper cosmosDBClientWrapper, List<TextChunk> batchChunkTexts)
     {
         this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);
 
-        int embeddingDimensions = DefaultDimensions;
-        if (configuration != null &&
-            !string.IsNullOrWhiteSpace(configuration[AzureOpenAIModelDeploymentDimensionsName]) &&
-            int.TryParse(configuration[AzureOpenAIModelDeploymentDimensionsName], out int inputDimensions))
-        {
-            embeddingDimensions = inputDimensions;
-            this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", embeddingDimensions);
-        }
+        int embeddingDimensions = configuration.GetValue<int>(AzureOpenAIModelDeploymentDimensionsName, DefaultDimensions);
+        this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", embeddingDimensions);
 
         EmbeddingGenerationOptions embeddingGenerationOptions = new EmbeddingGenerationOptions()
         {
@@ -106,4 +104,3 @@ public class BlobTriggerFunction(
         await Task.Delay(1);
     }
 }
-

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using OpenAI.Embeddings;
 using Container = Microsoft.Azure.Cosmos.Container;
 
-namespace BlobStorageTriggeredFunction;
+namespace DocumentVectorPipelineFunctions;
 
 internal class CosmosDBClientWrapper
 {

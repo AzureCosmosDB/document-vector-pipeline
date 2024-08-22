@@ -5,16 +5,13 @@ param capabilities array = [
 ]
 
 // Input parameters
-param containers array
 param databaseName string
-param keyvaultName string
-param secretName string
 param name string
 param tags object
 
 
 // Create cosmosdb account
-resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
+resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: name
   location: location
   kind: 'GlobalDocumentDB'
@@ -35,9 +32,26 @@ resource cosmosDB 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
   tags: tags
 }
 
+// Assign user identity permissions to storage account
+param managedIdentityName string
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' existing = {
+  name: managedIdentityName
+}
+
+// Assign storage account contributor role to azure function app
+param id_roles_arr array = ['b24988ac-6180-42a0-ab88-20f7382dd24c', '230815da-be43-4aae-9cb4-875f7bd000aa'] // Contributor (priviledged role), CosmosDB Operator, Data contributor
+resource roleAssignmentFUnctionApp 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for id_role in id_roles_arr : {
+    name: guid(resourceGroup().id, '${cosmosDB.name}-funcrole', id_role)
+    scope: cosmosDB
+    properties: {
+      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
+      principalId: managedIdentity.properties.principalId
+    }
+  }
+]
 
 // Create database
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
   parent: cosmosDB
   name: databaseName
   properties: {
@@ -48,49 +62,5 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15
   tags: tags
 }
 
-
-// Create cosmosdb container
-// Disabled for now, because we can't create containers with a vector embedding policy right after
-// creating the account yet, as the capability takes some time to propagage. Instead, we'll rely on the
-// CreateContainerIfNotExists call in the application code.
-// resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [
-//   for container in containers: {
-//     parent: database
-//     name: container.name
-//     properties: {
-//       resource: {
-//         id: container.name
-//         partitionKey: {
-//           paths: [
-//             container.partitionKeyPath
-//           ]
-//           kind: 'Hash'
-//           version: 2
-//         }
-//         indexingPolicy: container.indexingPolicy
-//         vectorEmbeddingPolicy: container.vectorEmbeddingPolicy
-//       }
-//     }
-//     tags: tags
-//   }
-// ]
-
-
-// Persist secrets to keyvault
-resource keyvault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
-  name: keyvaultName
-}
-
-resource cosmosKey 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
-  name: secretName
-  parent: keyvault
-  tags: tags
-  properties: {
-    value: cosmosDB.listConnectionStrings().connectionStrings[0].connectionString
-  }
-}
-
 output CosmosDBAccountName string = cosmosDB.name
 output CosmosDBEndpoint string = cosmosDB.properties.documentEndpoint
-output CosmosDBKeySecretName string = cosmosKey.name
-output CosmosDBKeyVaultReference string = cosmosKey.properties.secretUri

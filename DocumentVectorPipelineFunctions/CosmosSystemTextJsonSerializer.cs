@@ -2,14 +2,13 @@
 
 // Taken from https://github.com/Azure/azure-cosmos-dotnet-v3/pull/4332
 
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Azure.Cosmos;
 
-namespace Microsoft.Azure.Cosmos;
+namespace DocumentVectorPipelineFunctions;
 
 /// <summary>
 /// This class provides a default implementation of System.Text.Json Cosmos Linq Serializer.
@@ -120,11 +119,8 @@ internal sealed class CosmosSystemTextJsonSerializer : CosmosLinqSerializer
         }
 
         JsonPropertyNameAttribute? jsonPropertyNameAttribute = memberInfo.GetCustomAttribute<JsonPropertyNameAttribute>(true);
-        if (jsonPropertyNameAttribute is { } && !string.IsNullOrEmpty(jsonPropertyNameAttribute.Name))
-        {
-            return jsonPropertyNameAttribute.Name;
-        }
-
-        return memberInfo.Name;
+        return jsonPropertyNameAttribute is { } && !string.IsNullOrEmpty(jsonPropertyNameAttribute.Name)
+            ? jsonPropertyNameAttribute.Name
+            : memberInfo.Name;
     }
 }
