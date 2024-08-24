@@ -38,7 +38,6 @@ param document_intelligence_sku object
 param document_intelligence_publicNetworkAccess string
 param document_intelligence_disableLocalAuth bool
 
-
 // User managed identity resource
 module userManagedIdentity_deployment 'userIdentity.bicep' = {
   name: 'userManagedIdentity_deployment'
@@ -47,7 +46,6 @@ module userManagedIdentity_deployment 'userIdentity.bicep' = {
   }
 }
 
-
 // Storage resource
 module storage_deployment 'storage.bicep' = {
   name: 'storage_deployment'
@@ -55,13 +53,12 @@ module storage_deployment 'storage.bicep' = {
     name: storage_name
     containers: storage_containers
     tags: tags
-    managedIdentityName:managedIdentity_name
+    managedIdentityName: managedIdentity_name
   }
   dependsOn: [
     userManagedIdentity_deployment
   ]
 }
-
 
 // CosmosDB resource
 module cosmosdb_deployment 'cosmosdb.bicep' = {
@@ -78,7 +75,6 @@ module cosmosdb_deployment 'cosmosdb.bicep' = {
     storage_deployment
   ]
 }
-
 
 // Document Intelligence resource
 module document_intelligence_deployment 'documentintelligence.bicep' = {
@@ -97,18 +93,17 @@ module document_intelligence_deployment 'documentintelligence.bicep' = {
   ]
 }
 
-
 // OpenAI Resource
 module open_ai_deployment 'openai.bicep' = {
   name: 'open_ai_deployment'
   params: {
     deployments: open_ai_deployments
-    managedIdentityName:managedIdentity_name
+    managedIdentityName: managedIdentity_name
     name: open_ai_name
     format: open_ai_format
     kind: open_ai_kind
     sku: open_ai_sku
-    publicNetworkAccess:open_ai_publicNetworkAccess
+    publicNetworkAccess: open_ai_publicNetworkAccess
     tags: tags
   }
   dependsOn: [
@@ -116,12 +111,11 @@ module open_ai_deployment 'openai.bicep' = {
   ]
 }
 
-
 // Function App Resource
 module function_app_deployment 'functionapp.bicep' = {
   name: 'function_app_deployment'
   params: {
-    managedIdentityName:managedIdentity_name
+    managedIdentityName: managedIdentity_name
     functionAppName: function_app_name
     funcAppStorageSkuName: function_app_storageSkuName
     funcAppStorageAccountName: function_app_storageAccountName
@@ -143,7 +137,6 @@ module function_app_deployment 'functionapp.bicep' = {
     cosmosdb_deployment
   ]
 }
-
 
 // Output params
 // User Managed Identity and KeyVault Output Params

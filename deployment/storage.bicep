@@ -23,10 +23,10 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01'
 }
 
 resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = [
- for container in containers: {
-   parent: blobService
-   name: container.name
- }
+  for container in containers: {
+    parent: blobService
+    name: container.name
+  }
 ]
 
 // Assign user identity permissions to storage account
@@ -35,10 +35,9 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   name: managedIdentityName
 }
 
-
-//param storage_account_id_roles array = ['b24988ac-6180-42a0-ab88-20f7382dd24c','ba92f5b4-2d11-453d-a403-e96b0029c9fe'] // Contributor, Storage blob data contributor
 param storage_account_id_roles array = ['2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'] // Storage blob data reader
-resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for id_role in storage_account_id_roles : {
+resource roleAssignmentStorageAccount 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for id_role in storage_account_id_roles: {
     name: guid(resourceGroup().id, '${storage.name}-storagerole', id_role)
     scope: blobService
     properties: {

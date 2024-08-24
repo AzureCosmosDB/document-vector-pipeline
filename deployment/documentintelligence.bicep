@@ -39,14 +39,15 @@ resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-04-01-p
   sku: sku
 }
 
-param storage_account_id_roles array = ['a97b65f3-24c7-4388-baec-2e87135dc908','a001fd3d-188f-4b5d-821b-7da978bf7442'] //Cognitive service user, openai contributor
-resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for id_role in storage_account_id_roles : {
-  name: guid(resourceGroup().id, '${documentIntelligence.name}-storagerole', id_role)
-  scope: documentIntelligence
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
-    principalId: managedIdentity.properties.principalId
-  }
+param storage_account_id_roles array = ['a97b65f3-24c7-4388-baec-2e87135dc908'] //Cognitive service user
+resource roleAssignmentDocumentIntelligence 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for id_role in storage_account_id_roles: {
+    name: guid(resourceGroup().id, '${documentIntelligence.name}-storagerole', id_role)
+    scope: documentIntelligence
+    properties: {
+      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', id_role)
+      principalId: managedIdentity.properties.principalId
+    }
   }
 ]
 

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Net;
 using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,8 @@ internal class CosmosDBClientWrapper
     private Container? container;
 
     private static CosmosDBClientWrapper? instance;
+
+    private const int MaxRetryCount = 100;
 
     public static async ValueTask<CosmosDBClientWrapper> CreateInstance(CosmosClient client, ILogger logger)
     {
@@ -48,7 +51,7 @@ internal class CosmosDBClientWrapper
                 ChunkText = chunks[index].Text,
                 PageNumber = chunks[index].PageNumberIfKnown,
             };
-            upsertTasks.Add(this.container.UpsertItemAsync(documentChunk));
+            upsertTasks.Add(this.UpsertDocumentWithRetryAsync(documentChunk, CosmosDBClientWrapper.MaxRetryCount));
         }
 
         try
@@ -67,6 +70,35 @@ internal class CosmosDBClientWrapper
 
             throw;
         }
+    }
+
+    private async Task<ItemResponse<DocumentChunk>> UpsertDocumentWithRetryAsync(DocumentChunk document, int maxRetryAttempts)
+    {
+        if (this.container == null)
+        {
+            throw new InvalidOperationException("Container is not initialized.");
+        }
+
+        int retryCount = 0;
+        while (retryCount < maxRetryAttempts)
+        {
+            try
+            {
+                return await this.container.UpsertItemAsync(document);
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                retryCount++;
+                await Task.Delay(ex.RetryAfter.GetValueOrDefault());
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError($"An error occurred while upserting document with ID {document.ChunkId}: {ex.Message}");
+                throw;
+            }
+        }
+
+        throw new Exception($"Max retry attempts reached for document with ID {document.ChunkId}. Operation failed.");
     }
 
     private CosmosDBClientWrapper(CosmosClient client, ILogger logger)

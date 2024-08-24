@@ -1,3 +1,5 @@
+using System.ClientModel;
+using System.Net;
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Azure.Storage.Blobs;
@@ -20,9 +22,12 @@ public class BlobTriggerFunction(
 
     private const string AzureOpenAIModelDeploymentDimensionsName = "AzureOpenAIModelDimensions";
     private static readonly int DefaultDimensions = 1536;
-    private static readonly int BufferSize = 4 * 1024 * 1024; // 4MB
 
-    private const int MaxBatchSize = 2048;
+    private const int MaxRetryCount = 100;
+    private const int RetryDelay = 10 * 1000; // 100 seconds
+
+    private const int MaxBatchSize = 100;
+    private int embeddingDimensions = DefaultDimensions;
 
     [Function("BlobTriggerFunction")]
     public async Task Run([BlobTrigger("documents/{name}", Connection = "AzureBlobStorageAccConnectionString")] BlobClient blobClient)
@@ -44,10 +49,14 @@ public class BlobTriggerFunction(
     {
         var cosmosDBClientWrapper = await CosmosDBClientWrapper.CreateInstance(cosmosClient, this._logger);
 
+        this.embeddingDimensions = configuration.GetValue<int>(AzureOpenAIModelDeploymentDimensionsName, DefaultDimensions);
+        this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", this.embeddingDimensions);
+
         this._logger.LogInformation("Analyzing document using DocumentAnalyzerService from blobUri: '{blobUri}' using layout: {layout}", blobClient.Name, "prebuilt-read");
 
-        MemoryStream memoryStream = new MemoryStream();
+        using MemoryStream memoryStream = new MemoryStream();
         await blobClient.DownloadToAsync(memoryStream);
+        memoryStream.Seek(0, SeekOrigin.Begin);
 
         var operation = await documentAnalysisClient.AnalyzeDocumentAsync(
             WaitUntil.Completed,
@@ -67,6 +76,7 @@ public class BlobTriggerFunction(
             if (batchChunkTexts.Count >= MaxBatchSize)
             {
                 await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkTexts);
+                batchChunkTexts.Clear();
             }
         }
 
@@ -76,24 +86,53 @@ public class BlobTriggerFunction(
             await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkTexts);
         }
 
-        this._logger.LogInformation("Finished processing blob {0}, total chunks processed {1}.", blobClient.Name, totalChunksCount);
+        this._logger.LogInformation("Finished processing blob {name}, total chunks processed {count}.", blobClient.Name, totalChunksCount);
     }
 
     private async Task ProcessCurrentBatchAsync(BlobClient blobClient, CosmosDBClientWrapper cosmosDBClientWrapper, List<TextChunk> batchChunkTexts)
     {
+        this._logger.LogInformation("Generating embeddings for : '{count}'.", batchChunkTexts.Count());
+        var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
+
         this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);
+        await cosmosDBClientWrapper.UpsertDocumentsAsync(blobClient.Uri.AbsoluteUri, batchChunkTexts, embeddings);
+    }
 
-        int embeddingDimensions = configuration.GetValue<int>(AzureOpenAIModelDeploymentDimensionsName, DefaultDimensions);
-        this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", embeddingDimensions);
-
+    private async Task<EmbeddingCollection> GenerateEmbeddingsWithRetryAsync(IEnumerable<TextChunk> batchChunkTexts)
+    {
         EmbeddingGenerationOptions embeddingGenerationOptions = new EmbeddingGenerationOptions()
         {
-            Dimensions = embeddingDimensions
+            Dimensions = this.embeddingDimensions
         };
-        var embeddings = await embeddingClient.GenerateEmbeddingsAsync(batchChunkTexts.Select(p => p.Text).ToList(), embeddingGenerationOptions);
-        await cosmosDBClientWrapper.UpsertDocumentsAsync(blobClient.Uri.AbsoluteUri, batchChunkTexts, embeddings);
 
-        batchChunkTexts.Clear();
+        int retryCount = 0;
+        while (retryCount < MaxRetryCount)
+        {
+            try
+            {
+                return await embeddingClient.GenerateEmbeddingsAsync(batchChunkTexts.Select(p => p.Text).ToList(), embeddingGenerationOptions);
+            }
+            catch (ClientResultException ex)
+            {
+                if (ex.Status is ((int)HttpStatusCode.TooManyRequests) or ((int)HttpStatusCode.Unauthorized))
+                {
+                    if (retryCount >= MaxRetryCount)
+                    {
+                        throw new Exception($"Max retry attempts reached generating embeddings with exception: {ex}.");
+                    }
+
+                    retryCount++;
+
+                    await Task.Delay(RetryDelay);
+                }
+                else
+                {
+                    throw new Exception($"Failed to generate embeddings with error: {ex}.");
+                }
+            }
+        }
+
+        throw new Exception($"Failed to generate embeddings after retrying for ${MaxRetryCount} times.");
     }
 
     private async Task HandleBlobDeleteEventAsync(BlobClient blobClient)

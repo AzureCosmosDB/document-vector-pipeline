@@ -20,4 +20,4 @@ param sku = 'S0'
 param kind = 'OpenAI'
 param format = 'OpenAI'
 param publicNetworkAccess = 'Enabled'
-param tags =  {}
+param tags = {}

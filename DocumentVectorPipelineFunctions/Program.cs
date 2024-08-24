@@ -27,7 +27,6 @@ var hostBuilder = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureAppConfiguration(config =>
     {
-        config.AddEnvironmentVariables();
         config.AddUserSecrets<BlobTriggerFunction>(optional: true, reloadOnChange: false);
     });
 

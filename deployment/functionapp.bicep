@@ -37,7 +37,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
 }
 var storageConnectionStringValue = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
 
-
 // Create webapps storage account to hold webapps related resources
 resource func_app_storage_account 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: funcAppStorageAccountName
@@ -55,10 +54,10 @@ resource func_app_storage_account 'Microsoft.Storage/storageAccounts@2023-05-01'
 }
 var funcAppStorageConnectionStringValue = 'DefaultEndpointsProtocol=https;AccountName=${func_app_storage_account.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${func_app_storage_account.listKeys().keys[0].value}'
 
-
 // Assign storage account contributor role to func_app_storage_account
 param storage_account_id_roles array = ['ba92f5b4-2d11-453d-a403-e96b0029c9fe'] // Storage blob data contributor
-resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for id_role in storage_account_id_roles : {
+resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [
+  for id_role in storage_account_id_roles: {
     name: guid(resourceGroup().id, '${func_app_storage_account.name}-webjobsrole', id_role)
     scope: func_app_storage_account
     properties: {
@@ -67,7 +66,6 @@ resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignmen
     }
   }
 ]
-
 
 // Create a new Log Analytics workspace to back the Azure Application Insights instance
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -110,8 +108,7 @@ resource appservice_plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   sku: {
     name: 'Y1'
   }
-  properties: {
-  }
+  properties: {}
 }
 
 // Deploy the Azure Function app with application
@@ -221,7 +218,8 @@ resource funcApp 'Microsoft.Web/sites@2023-12-01' = {
 
 // Assign storage account contributor role to azure function app
 param id_roles_arr array = ['b24988ac-6180-42a0-ab88-20f7382dd24c'] // Contributor (priviledged access)
-resource roleAssignmentFUnctionApp 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for id_role in id_roles_arr : {
+resource roleAssignmentFunctionApp 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for id_role in id_roles_arr: {
     name: guid(resourceGroup().id, '${func_app_storage_account.name}-funcrole', id_role)
     scope: funcApp
     properties: {

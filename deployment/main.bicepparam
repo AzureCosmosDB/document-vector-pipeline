@@ -20,18 +20,15 @@ param storage_containers = [
   }
 ]
 
-
 // Function app params
 param function_app_storageSkuName = 'Standard_LRS'
-
 
 // CosmosDB params
 param cosmosdb_databaseName = 'semantic_search_db'
 param cosmosdb_capabilities = [
   { name: 'EnableServerless' }
-  { name: 'EnableNoSQLVectorSearch'}
+  { name: 'EnableNoSQLVectorSearch' }
 ]
-
 
 // Document Intelligence Params
 param document_intelligence_sku = {
@@ -39,7 +36,6 @@ param document_intelligence_sku = {
 }
 param document_intelligence_publicNetworkAccess = 'Enabled'
 param document_intelligence_disableLocalAuth = false
-
 
 // Open AI params
 param modelDeployment = 'text-embedding-3-large'
@@ -49,7 +45,7 @@ param open_ai_deployments = [
     name: modelDeployment
     sku: {
       name: 'Standard'
-      capacity: 10
+      capacity: 50
     }
     model: {
       name: modelDeployment

@@ -1,4 +1,4 @@
-param location string= resourceGroup().location
+param location string = resourceGroup().location
 
 // Input parameters
 param deployments array
@@ -49,15 +49,17 @@ resource openAiDeployments 'Microsoft.CognitiveServices/accounts/deployments@202
   }
 ]
 
-
 // Assign user managed identity to openai app.
 param managedIdentityName string
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' existing = {
   name: managedIdentityName
 }
-param storage_account_id_roles array = ['b24988ac-6180-42a0-ab88-20f7382dd24c', 'a001fd3d-188f-4b5d-821b-7da978bf7442','a97b65f3-24c7-4388-baec-2e87135dc908'] // contributor (priviledged access), Cognitive Services OpenAI Contributor
+param storage_account_id_roles array = [
+  'a97b65f3-24c7-4388-baec-2e87135dc908' //Cognitive Services User
+]
 
-resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignments@2022-04-01' = [for id_role in storage_account_id_roles : {
+resource roleAssignmentOpenAIAccount 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for id_role in storage_account_id_roles: {
     name: guid(resourceGroup().id, '${name}-openairole', id_role)
     scope: openAi
     properties: {
@@ -66,7 +68,6 @@ resource roleAssignmentFuncStorageAccount 'Microsoft.Authorization/roleAssignmen
     }
   }
 ]
-
 
 output openAIServiceName string = openAi.name
 output openAIServiceEndpoint string = openAi.properties.endpoint
