@@ -45,7 +45,7 @@ param open_ai_deployments = [
     name: modelDeployment
     sku: {
       name: 'Standard'
-      capacity: 50
+      capacity: 100
     }
     model: {
       name: modelDeployment

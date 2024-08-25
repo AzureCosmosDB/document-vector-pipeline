@@ -24,9 +24,11 @@ public class BlobTriggerFunction(
     private static readonly int DefaultDimensions = 1536;
 
     private const int MaxRetryCount = 100;
-    private const int RetryDelay = 10 * 1000; // 100 seconds
+    private const int RetryDelay = 10 * 1000; // 10 seconds
 
-    private const int MaxBatchSize = 100;
+    private const int MaxBatchSize = 10;
+    private const int MaxDegreeOfParallelism = 50;
+
     private int embeddingDimensions = DefaultDimensions;
 
     [Function("BlobTriggerFunction")]
@@ -66,32 +68,48 @@ public class BlobTriggerFunction(
         var result = operation.Value;
         this._logger.LogInformation("Extracted content from '{name}', # pages {pageCount}", blobClient.Name, result.Pages.Count);
 
+        var textChunks = TextChunker.FixedSizeChunking(result);
+
+        var listOfBatches = new List<List<TextChunk>>();
+
         int totalChunksCount = 0;
         var batchChunkTexts = new List<TextChunk>(MaxBatchSize);
-        foreach (var chunk in TextChunker.FixedSizeChunking(result))
+        for (int i = 0; i <= textChunks.Count(); i++)
         {
-            batchChunkTexts.Add(chunk);
+            if (i == textChunks.Count())
+            {
+                if (batchChunkTexts.Count() > 0)
+                {
+                    listOfBatches.Add(new List<TextChunk>(batchChunkTexts));
+                }
+                batchChunkTexts.Clear();
+
+                break;
+            }
+
+            batchChunkTexts.Add(textChunks.ElementAt(i));
             totalChunksCount++;
 
             if (batchChunkTexts.Count >= MaxBatchSize)
             {
-                await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkTexts);
+                listOfBatches.Add(new List<TextChunk>(batchChunkTexts));
                 batchChunkTexts.Clear();
             }
         }
 
-        // Process any remaining documents in last batch
-        if (batchChunkTexts.Count > 0)
+        this._logger.LogInformation("Processing list of batches in parallel, total batches: {listSize}, chunks count: {chunksCount}", listOfBatches.Count(), totalChunksCount);
+        await Parallel.ForEachAsync(listOfBatches, new ParallelOptions { MaxDegreeOfParallelism = MaxDegreeOfParallelism }, async (batchChunkText, cancellationToken) =>
         {
-            await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkTexts);
-        }
+            this._logger.LogInformation("Processing batch of size: {batchSize}", batchChunkText.Count());
+            await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkText);
+        });
 
         this._logger.LogInformation("Finished processing blob {name}, total chunks processed {count}.", blobClient.Name, totalChunksCount);
     }
 
     private async Task ProcessCurrentBatchAsync(BlobClient blobClient, CosmosDBClientWrapper cosmosDBClientWrapper, List<TextChunk> batchChunkTexts)
     {
-        this._logger.LogInformation("Generating embeddings for : '{count}'.", batchChunkTexts.Count());
+        this._logger.LogInformation("Generating embeddings for batch of size: '{size}'.", batchChunkTexts.Count());
         var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
 
         this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);

@@ -211,6 +211,10 @@ resource funcApp 'Microsoft.Web/sites@2023-12-01' = {
           name: 'AzureOpenAIModelDimensions'
           value: modelDimensions
         }
+        {
+          name: 'AzureFunctionsJobHost__functionTimeout'
+          value: '00:10:00'
+        }
       ]
     }
   }
