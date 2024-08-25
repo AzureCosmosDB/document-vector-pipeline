@@ -1,10 +1,9 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 
-namespace BlobStorageTriggeredFunction;
+namespace DocumentVectorPipelineFunctions;
 
-record struct TextChunk(
+internal record struct TextChunk(
     string Text,
     int PageNumberIfKnown,
     int ChunkNumber);

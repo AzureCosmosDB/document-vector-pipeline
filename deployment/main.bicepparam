@@ -1,21 +1,17 @@
 using './main.bicep'
 
-
-// Common params
-param tags = {}
-
 var baseName = 'docing'
 
 // Naming params
 param managedIdentity_name = '${baseName}useridentity'
-param keyvault_name = '${baseName}kv'
 param storage_name = '${baseName}blobacc'
 param function_app_name = '${baseName}funcapp'
 param cosmosdb_name = '${baseName}cosmosacc'
 param document_intelligence_name = '${baseName}docintl'
 param open_ai_name = '${baseName}openai'
 
-// User assigned identity parameters
+// Common params
+param tags = {}
 
 // Storage params
 param storage_containers = [
@@ -23,58 +19,16 @@ param storage_containers = [
     name: 'documents'
   }
 ]
-param storage_connectionStringSecretName = 'AzureBlobStorageAccConnectionString'
-
 
 // Function app params
 param function_app_storageSkuName = 'Standard_LRS'
-param function_app_storageConnectionStringSecretName = 'AzureWebJobsStorageConnectionString'
-
 
 // CosmosDB params
 param cosmosdb_databaseName = 'semantic_search_db'
 param cosmosdb_capabilities = [
   { name: 'EnableServerless' }
+  { name: 'EnableNoSQLVectorSearch' }
 ]
-param cosmosdb_containers = [
-  {
-    name: 'doc_search_container'
-    partitionKeyPath: '/document_url'
-    indexingPolicy: {
-      indexingMode: 'consistent'
-      automatic: true
-      includedPaths: [
-        {
-          path:'/*'
-        }
-      ]
-      fullTextIndexes: [
-        {
-          path: '/content'
-          language: 1033
-        }
-      ]
-      vectorIndexes: [
-        {
-          path: '/embeddings'
-          type: 'diskANN'
-        }
-      ]
-    }
-    vectorEmbeddingPolicy: {
-      vectorEmbeddings: [
-        {
-          path: '/embeddings'
-          dataType: 'float32'
-          distanceFunction: 'cosine'
-          dimensions: 1536
-        }
-      ]
-    }
-  }
-]
-param cosmosdb_secretName = 'AzureCosmosDBConnectionString'
-
 
 // Document Intelligence Params
 param document_intelligence_sku = {
@@ -82,22 +36,19 @@ param document_intelligence_sku = {
 }
 param document_intelligence_publicNetworkAccess = 'Enabled'
 param document_intelligence_disableLocalAuth = false
-param documentIntelligenceEndpointKey = 'AzureDocumentIntelligenceEndpoint'
-param documentIntelligenceSecretKey = 'AzureDocumentIntelligenceApiKey'
-
 
 // Open AI params
-param embeddingModelName = 'text-embedding-3-large'
-param embeddingModelDimensions = '1536'
+param modelDeployment = 'text-embedding-3-large'
+param modelDimensions = '1536'
 param open_ai_deployments = [
   {
-    name: embeddingModelName
+    name: modelDeployment
     sku: {
       name: 'Standard'
       capacity: 50
     }
     model: {
-      name: embeddingModelName
+      name: modelDeployment
       version: '1'
     }
   }
@@ -106,7 +57,3 @@ param open_ai_sku = 'S0'
 param open_ai_kind = 'OpenAI'
 param open_ai_format = 'OpenAI'
 param open_ai_publicNetworkAccess = 'Enabled'
-param open_ai_openAIEndpointKey = 'AzureOpenAIEndpoint'
-param open_ai_openAISecretKey = 'AzureOpenAIApiKey'
-param open_ai_openAIModelDeploymentKey = 'AzureOpenAIModelDeployment'
-param open_ai_openAIModelDimensionsKey = 'AzureOpenAIModelDimensions'
