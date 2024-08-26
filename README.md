@@ -23,7 +23,7 @@ Currently this proof of concept uses:
 * Azure Managed Identity to connect resources.
 * Azure AI Document Intelligenct for text extraction using the `prebuilt-layout` model.
 * Fixed size, non-overlapping text chunking.
-* The `text-embedding-ada-002` embedding model from Azure OpenAI for embedding.
+* The `text-embedding-3-large` embedding model from Azure OpenAI for embedding.
 * Cosmos DB's `DiskANN` index for the resulting vectors.
 
 ## Setup
