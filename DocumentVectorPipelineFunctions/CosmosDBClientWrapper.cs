@@ -123,6 +123,7 @@ internal class CosmosDBClientWrapper
                     }
                 ]
         };
+        indexingPolicy.ExcludedPaths.Add(new ExcludedPath { Path = "/embedding/*" });
         var containerResponse = await dbResponse.Database.CreateContainerIfNotExistsAsync(new ContainerProperties
         {
             Id = "doc_search_container",
