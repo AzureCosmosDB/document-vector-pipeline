@@ -1,7 +1,7 @@
 # Azure Cosmos DB Document to Vector ingestion pipeline Proof-of-concept
 
 ## Background
-This purpose of this project is to demonstrate a proof of concept pipeline for ingesting content stored in document form (pdf, docx, etc) into a searchable index in Azure Cosmos DB.
+This purpose of this project is to demonstrate a proof of concept pipeline for ingesting content stored in document form (pdf, docx, etc) into a searchable index in Azure Cosmos DB for NoSQL.
 
 **Let us know what you think!** Please reach out to CDB4AI@Microsoft.com with feedback and create a GitHub issue for any bugs/feature requests.
 
