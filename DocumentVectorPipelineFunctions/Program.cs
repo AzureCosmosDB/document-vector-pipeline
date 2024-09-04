@@ -20,8 +20,6 @@ const string AzureOpenAIKey = "AzureOpenAIKey";
 string? managedIdentityClientId = Environment.GetEnvironmentVariable("AzureManagedIdentityClientId");
 bool local = Convert.ToBoolean(Environment.GetEnvironmentVariable("RunningLocally"));
 
-Console.WriteLine($"Running locally: {local}");
-
 TokenCredential credential = local
     ? new DefaultAzureCredential()
     : new ManagedIdentityCredential(clientId: managedIdentityClientId);

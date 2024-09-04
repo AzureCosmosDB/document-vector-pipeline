@@ -47,8 +47,6 @@ public class BlobTriggerFunction(
 
     private async Task HandleBlobCreateEventAsync(BlobClient blobClient)
     {
-        //var cosmosDBClientWrapper = await CosmosDBClientWrapper.CreateInstance(cosmosClient, this._logger);
-
         this.embeddingDimensions = configuration.GetValue<int>(AzureOpenAIModelDeploymentDimensionsName, DefaultDimensions);
         this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", this.embeddingDimensions);
 
