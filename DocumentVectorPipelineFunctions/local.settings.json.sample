@@ -1,11 +1,12 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",   
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "AzureWebJobsAzureBlobStorageAccConnectionString__blobServiceUri": "https://.blob.core.windows.net",
     "AzureWebJobsAzureBlobStorageAccConnectionString__queueServiceUri": "https://.queue.core.windows.net",
     "AzureDocumentIntelligenceConnectionString": "https://.cognitiveservices.azure.com/",
     "AzureDocumentIntelligenceKey": "",
+    "AzureOpenAIKey": "",
     "AzureOpenAIConnectionString": "https:/.openai.azure.com/",
     "RunningLocally": true,
     "AzureOpenAIModelDeployment": "text-embedding-3-small",

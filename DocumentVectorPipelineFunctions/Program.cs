@@ -15,6 +15,7 @@ const string AzureDocumentIntelligenceEndpointConfigName = "AzureDocumentIntelli
 const string AzureOpenAIConnectionString = "AzureOpenAIConnectionString";
 const string AzureOpenAIModelDeploymentConfigName = "AzureOpenAIModelDeployment";
 const string AzureDocumentIntelligenceKey = "AzureDocumentIntelligenceKey";
+const string AzureOpenAIKey = "AzureOpenAIKey";
 
 string? managedIdentityClientId = Environment.GetEnvironmentVariable("AzureManagedIdentityClientId");
 bool local = Convert.ToBoolean(Environment.GetEnvironmentVariable("RunningLocally"));
@@ -63,10 +64,12 @@ hostBuilder.ConfigureServices(sc =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
         var openAIEndpoint = config[AzureOpenAIConnectionString] ?? throw new Exception($"Configure {AzureOpenAIConnectionString}");
+        var azureAIKey = config[AzureOpenAIKey] ?? throw new Exception($"Configure {AzureOpenAIKey}");
+
         // TODO: Implement a custom retry policy that takes the retry-after header into account.
         var azureOpenAIClient = new AzureOpenAIClient(
             new Uri(openAIEndpoint),
-            credential,
+            new Azure.AzureKeyCredential(azureAIKey),
             new AzureOpenAIClientOptions()
             {
                 ApplicationId = "DocumentIngestion",

@@ -104,7 +104,11 @@ public class BlobTriggerFunction(
             this._logger.LogInformation("Processing text: {0}", batchChunkText);
 
             this._logger.LogInformation("Generating embeddings for batch of size: '{size}'.", batchChunkTexts.Count());
-            var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
+
+            if (batchChunkTexts.Count() > 0)
+            {
+                var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
+            }
 
             // Save into Azure SQL
         });

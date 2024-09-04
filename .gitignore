@@ -263,3 +263,4 @@ __pycache__/
 *local.settings.json
 
 /DocumentVectorPipelineFunctions/local.settings.json.dm
+/DocumentVectorPipelineFunctions/local.settings.json
