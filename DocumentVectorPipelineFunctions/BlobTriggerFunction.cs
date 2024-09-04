@@ -3,7 +3,6 @@ using System.Net;
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Azure.Storage.Blobs;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,6 @@ public class BlobTriggerFunction(
     IConfiguration configuration,
     DocumentAnalysisClient documentAnalysisClient,
     ILoggerFactory loggerFactory,
-    CosmosClient cosmosClient,
     EmbeddingClient embeddingClient)
 {
     private readonly ILogger _logger = loggerFactory.CreateLogger<BlobTriggerFunction>();
@@ -49,7 +47,7 @@ public class BlobTriggerFunction(
 
     private async Task HandleBlobCreateEventAsync(BlobClient blobClient)
     {
-        var cosmosDBClientWrapper = await CosmosDBClientWrapper.CreateInstance(cosmosClient, this._logger);
+        //var cosmosDBClientWrapper = await CosmosDBClientWrapper.CreateInstance(cosmosClient, this._logger);
 
         this.embeddingDimensions = configuration.GetValue<int>(AzureOpenAIModelDeploymentDimensionsName, DefaultDimensions);
         this._logger.LogInformation("Using OpenAI model dimensions: '{embeddingDimensions}'.", this.embeddingDimensions);
@@ -101,20 +99,25 @@ public class BlobTriggerFunction(
         await Parallel.ForEachAsync(listOfBatches, new ParallelOptions { MaxDegreeOfParallelism = MaxDegreeOfParallelism }, async (batchChunkText, cancellationToken) =>
         {
             this._logger.LogInformation("Processing batch of size: {batchSize}", batchChunkText.Count());
-            await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkText);
+            //await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkText);
+
+            this._logger.LogInformation("Processing text: {0}", batchChunkText);
+
+            this._logger.LogInformation("Generating embeddings for batch of size: '{size}'.", batchChunkTexts.Count());
+            var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
+
+            // Save into Azure SQL
         });
 
         this._logger.LogInformation("Finished processing blob {name}, total chunks processed {count}.", blobClient.Name, totalChunksCount);
     }
 
-    private async Task ProcessCurrentBatchAsync(BlobClient blobClient, CosmosDBClientWrapper cosmosDBClientWrapper, List<TextChunk> batchChunkTexts)
-    {
-        this._logger.LogInformation("Generating embeddings for batch of size: '{size}'.", batchChunkTexts.Count());
-        var embeddings = await this.GenerateEmbeddingsWithRetryAsync(batchChunkTexts);
+    //private async Task ProcessCurrentBatchAsync(BlobClient blobClient, CosmosDBClientWrapper cosmosDBClientWrapper, List<TextChunk> batchChunkTexts)
+    //{
 
-        this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);
-        await cosmosDBClientWrapper.UpsertDocumentsAsync(blobClient.Uri.AbsoluteUri, batchChunkTexts, embeddings);
-    }
+    //    this._logger.LogInformation("Creating Cosmos DB documents for batch of size {count}", batchChunkTexts.Count);
+    //    await cosmosDBClientWrapper.UpsertDocumentsAsync(blobClient.Uri.AbsoluteUri, batchChunkTexts, embeddings);
+    //}
 
     private async Task<EmbeddingCollection> GenerateEmbeddingsWithRetryAsync(IEnumerable<TextChunk> batchChunkTexts)
     {
