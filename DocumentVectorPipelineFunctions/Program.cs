@@ -43,21 +43,6 @@ hostBuilder.ConfigureServices(sc =>
             new Azure.AzureKeyCredential(docaiKey));
         return documentAnalysisClient;
     });
-    //sc.AddSingleton<CosmosClient>(sp =>
-    //{
-    //    var config = sp.GetRequiredService<IConfiguration>();
-    //    var cosmosdbEndpoint = config[AzureCosmosDBConnectionString] ?? throw new Exception($"Configure {AzureCosmosDBConnectionString}");
-    //    var cosmosClient = new CosmosClient(
-    //        cosmosdbEndpoint,
-    //        credential,
-    //        new CosmosClientOptions
-    //        {
-    //            ApplicationName = "document ingestion",
-    //            AllowBulkExecution = true,
-    //            Serializer = new CosmosSystemTextJsonSerializer(JsonSerializerOptions.Default),
-    //        });
-    //    return cosmosClient;
-    //});
     sc.AddSingleton<EmbeddingClient>(sp =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
