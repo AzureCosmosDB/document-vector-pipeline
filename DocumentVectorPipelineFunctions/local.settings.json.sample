@@ -10,7 +10,8 @@
     "AzureOpenAIConnectionString": "https:/.openai.azure.com/",
     "RunningLocally": true,
     "AzureOpenAIModelDeployment": "text-embedding-3-small",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "SqlConnectionString" = ""
   }
 }
 
