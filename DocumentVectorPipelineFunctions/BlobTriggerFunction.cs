@@ -2,6 +2,7 @@ using System.ClientModel;
 using System.Data;
 using System.Globalization;
 using System.Net;
+using System.Text.Json;
 using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Azure.Storage.Blobs;
@@ -145,13 +146,14 @@ public class BlobTriggerFunction(
                     {
                         using (IDbConnection db = new SqlConnection(connstring))
                         {
-                            string insertQuery = @"INSERT INTO [dbo].[Document] (ChunkId, DocumentUrl, Embedding, ChunkText, PageNumber) VALUES (@ChunkId, @DocumentUrl,@Embedding,@ChunkText, @PageNumber);";
+                            string insertQuery = @"INSERT INTO [dbo].[Document] (ChunkId, DocumentUrl, Embedding, ChunkText, PageNumber) VALUES (@ChunkId, @DocumentUrl,JSON_ARRAY_TO_VECTOR(@Embedding),@ChunkText, @PageNumber);";
 
                             var doc = new Document()
                             {
                                 ChunkId = batchChunkTexts[index].ChunkNumber,
                                 DocumentUrl = blobClient.Uri.AbsoluteUri,
-                                Embedding = (embeddings[index].Vector.ToArray()).Select(f => BitConverter.GetBytes(f)).SelectMany(b => b).ToArray(),
+                                //Embedding = (embeddings[index].Vector.ToArray()).Select(f => BitConverter.GetBytes(f)).SelectMany(b => b).ToArray(),
+                                Embedding = JsonSerializer.Serialize(embeddings[index].Vector),
                                 ChunkText = batchChunkTexts[index].Text,
                                 PageNumber = batchChunkTexts[index].PageNumberIfKnown,
                             };
