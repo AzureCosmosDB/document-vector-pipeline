@@ -217,7 +217,6 @@ public class BlobTriggerFunction(
     {
         using (var connection = new SqlConnection(connectionString))
         {
-            await connection.OpenAsync();
             await connection.ExecuteAsync(script);
         }
     }
