@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 using OpenAI.Embeddings;
 
 const string AzureDocumentIntelligenceEndpointConfigName = "AzureDocumentIntelligenceConnectionString";
-//const string AzureCosmosDBConnectionString = "AzureCosmosDBConnectionString";
+
 const string AzureOpenAIConnectionString = "AzureOpenAIConnectionString";
 const string AzureOpenAIModelDeploymentConfigName = "AzureOpenAIModelDeployment";
 const string AzureDocumentIntelligenceKey = "AzureDocumentIntelligenceKey";

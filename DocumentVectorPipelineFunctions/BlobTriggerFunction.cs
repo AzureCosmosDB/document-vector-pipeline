@@ -7,7 +7,6 @@ using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Azure.Storage.Blobs;
 using Dapper;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -126,7 +125,7 @@ public class BlobTriggerFunction(
         await Parallel.ForEachAsync(listOfBatches, new ParallelOptions { MaxDegreeOfParallelism = MaxDegreeOfParallelism }, async (batchChunkTexts, cancellationToken) =>
         {
             this._logger.LogInformation("Processing batch of size: {batchSize}", batchChunkTexts.Count());
-            //await this.ProcessCurrentBatchAsync(blobClient, cosmosDBClientWrapper, batchChunkText);
+       
 
             this._logger.LogInformation("Processing text: {0}", batchChunkTexts);
 
